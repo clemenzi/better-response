@@ -1,12 +1,26 @@
 {
   "name": "better-response",
-  "version": "1.0.2",
-  "description": "Lightweight wrapper around Javascript's Response class",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "1.0.3",
+  "description": "A tiny helper for creating better Fetch API Response objects.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
-    "format": "prettier --write ."
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "prepublishOnly": "pnpm test && pnpm typecheck && pnpm build"
   },
   "repository": {
     "type": "git",
@@ -14,14 +28,15 @@
   },
   "keywords": [
     "response",
+    "fetch",
     "http"
   ],
   "author": "Valerio Clemenzi",
   "license": "MIT",
   "devDependencies": {
     "prettier": "^3.3.3",
-    "terser": "^5.31.3",
     "tsup": "^8.2.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.5"
   }
 }

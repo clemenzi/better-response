@@ -1,49 +1,178 @@
 # Better Response
 
-`BetterResponse` is a lightweight wrapper around the [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response) class in JavaScript, designed to simplify response creation and enhance control over caching and JSON serialization.
+A tiny helper for creating better Fetch API `Response` objects.
+
+`better-response` keeps the native `Response` API, but removes a bit of boilerplate for common JSON, text, HTML, cache, and error responses.
 
 ## Installation
-
-To use `BetterResponse`, simply include it in your project. You can install it via npm:
 
 ```bash
 npm install better-response
 ```
 
-Here's a quick example of how to import `BetterResponse` in your project:
+## Usage
 
-```js
+```ts
 import BetterResponse from "better-response";
+
+return new BetterResponse({ ok: true });
 ```
 
-## Features
+That produces a normal `Response` with:
 
-### Automatic JSON Stringify
+- a JSON string body
+- `Content-Type: application/json`
 
-`BetterResponse` automatically converts objects to JSON and sets the appropriate headers, streamlining the process of creating JSON responses.
+## Static helpers
 
-```js
-// Using BetterResponse
-new BetterResponse({ hello: "world" });
+### JSON
 
-// Using Response
-new Response(JSON.stringify({ hello: "world" }), {
-  headers: { "Content-Type": "application/json" }
+```ts
+return BetterResponse.json({ ok: true });
+```
+
+### Text
+
+```ts
+return BetterResponse.text("Hello");
+```
+
+### HTML
+
+```ts
+return BetterResponse.html("<h1>Hello</h1>");
+```
+
+### Error
+
+```ts
+return BetterResponse.error("Not found", 404);
+```
+
+Response body:
+
+```json
+{
+  "error": "Not found"
+}
+```
+
+### Redirect
+
+```ts
+return BetterResponse.redirect("/login");
+```
+
+### Empty
+
+```ts
+return BetterResponse.empty(204);
+```
+
+## Constructor behavior
+
+`BetterResponse` only auto-serializes plain objects and arrays.
+
+```ts
+new BetterResponse({ ok: true });
+new BetterResponse(["a", "b"]);
+```
+
+It leaves other Fetch body types alone:
+
+```ts
+new BetterResponse("hello");
+new BetterResponse(new Blob(["hello"]));
+new BetterResponse(new FormData());
+new BetterResponse(new URLSearchParams({ q: "test" }));
+```
+
+If you provide your own `Content-Type`, it is preserved:
+
+```ts
+new BetterResponse(
+  { error: "Invalid input" },
+  {
+    headers: {
+      "Content-Type": "application/problem+json"
+    }
+  }
+);
+```
+
+## Cache control
+
+Use `cache: false`, a number, or an object.
+
+```ts
+new BetterResponse({ ok: true }, { cache: false });
+
+new BetterResponse({ ok: true }, { cache: 60 });
+// Cache-Control: public, max-age=60
+
+new BetterResponse({ ok: true }, {
+  cache: {
+    public: true,
+    maxAge: 60,
+    staleWhileRevalidate: 300
+  }
+});
+// Cache-Control: public, max-age=60, stale-while-revalidate=300
+```
+
+## Security headers
+
+Security headers are opt-in:
+
+```ts
+BetterResponse.json(
+  { ok: true },
+  {
+    cache: {
+      public: true,
+      maxAge: 60,
+      staleWhileRevalidate: 300
+    },
+    security: true
+  }
+);
+```
+
+When enabled, `better-response` adds safe defaults unless you already set them:
+
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: no-referrer`
+- `X-Frame-Options: DENY`
+
+## Problem responses
+
+For RFC 7807 style responses:
+
+```ts
+return BetterResponse.problem({
+  status: 400,
+  title: "Validation error",
+  detail: "Email is invalid"
 });
 ```
 
-### Cache Control
+This sets:
 
-`BetterResponse` provides convenient caching options to manage response caching times.
+- `Content-Type: application/problem+json`
 
-```js
-// Default Caching
-new BetterResponse("Cache is amazing!", { status: 200, cache: "default" });
+## Native compatibility
 
-// Custom Cache Duration (in milliseconds)
-new BetterResponse("Cache is amazing!", { status: 200, cache: 1000 * 60 }); // Cache for 1 minute
+The class extends the standard `Response`, so normal `ResponseInit` options still work:
+
+```ts
+return new BetterResponse("Created", {
+  status: 201,
+  headers: {
+    "X-App": "demo"
+  }
+});
 ```
 
 ## License
 
-`BetterResponse` is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+MIT
